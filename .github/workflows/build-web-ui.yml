@@ -1,0 +1,40 @@
+name: build-web-ui
+
+# Builds the standalone VoiceStudio web client (vite web config) and publishes
+# frontend/dist as an artifact, so it can be deployed to a static host.
+# Runs on GitHub's runners because the build needs more RAM than small CI boxes have.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-web-ui.yml'
+
+jobs:
+  build-web-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install dependencies
+        working-directory: electron
+        run: bun install
+
+      - name: Build web client
+        working-directory: electron
+        run: bun run build:web
+
+      - name: Show build output
+        run: ls -la frontend/dist && du -sh frontend/dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: frontend/dist
+          retention-days: 3
